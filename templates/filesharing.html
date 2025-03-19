@@ -202,8 +202,45 @@
         </div>
         
         <section>
-            <!-- here is the update my peoject if my user upload the whateverfile uploaded here the file getting uploaed and generate the ramdome link if user shre to third person the third person will access that link to get an user uploaed file  -->
+            <h2>Upload File</h2>
+            <form method="POST" enctype="multipart/form-data">
+                <input type="file" name="file" required>
+                <button type="submit" class="download-btn">Upload</button>
+            </form>
+        
+            <h2 style="margin-top: 2rem;">Your Shared Files</h2>
+            {% if files %}
+            <div class="file-list">
+                {% for file in files %}
+                <div class="file-item" style="margin-bottom: 1rem; padding: 1rem; background: #2d3748; border-radius: 0.5rem;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <span>{{ file.filename }}</span>
+                        <div>
+                            <input type="text" value="{{ url_for('share_file', unique_id=file.unique_id, _external=True) }}" 
+                                   id="link-{{ file.id }}" 
+                                   readonly 
+                                   style="background: #1e293b; border: none; color: white; padding: 0.5rem; border-radius: 0.25rem; margin-right: 1rem; width: 300px;">
+                            <button onclick="copyLink('link-{{ file.id }}')" class="download-btn">
+                                Copy Link
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <p>No files uploaded yet.</p>
+            {% endif %}
         </section>
+        
+        <script>
+        function copyLink(elementId) {
+            const copyText = document.getElementById(elementId);
+            copyText.select();
+            document.execCommand('copy');
+            alert('Link copied to clipboard!');
+        }
+        </script>
     </main>
 </body>
 </html>
