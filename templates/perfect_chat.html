@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat Room</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.5.4/socket.io.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --text-color: #ffffff;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #3b82f6;
+            --whatsapp-green: #25D366;
+            --muted-text: #d1d5db;
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: var(--text-color);
+            height: 100vh;
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            background: var(--card-bg);
+            padding: 2rem 1rem;
+            overflow-y: auto;
+        }
+
+        .user-item {
+            padding: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            position: relative;
+        }
+
+        .user-item:hover {
+            background: var(--primary-color);
+        }
+
+        .user-item.active {
+            background: var(--secondary-color);
+        }
+
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-header {
+            padding: 1rem;
+            border-bottom: 1px solid var(--secondary-color);
+            background: var(--card-bg);
+        }
+
+        .chat-messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 1rem;
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+        }
+
+        .message {
+            max-width: 70%;
+            padding: 0.75rem;
+            border-radius: 1rem;
+            background: var(--card-bg);
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .message.sent {
+            background: var(--primary-color);
+            align-self: flex-end;
+            margin: 8px 0;
+            word-break: break-word;
+        }
+
+        .message.received {
+            align-self: flex-start;
+        }
+
+        .message-info {
+            font-size: 0.8rem;
+            color: var(--text-color);
+            opacity: 0.7;
+            margin-top: 0.5rem;
+        }
+
+        .message-input {
+            padding: 1rem;
+            display: none;
+        }
+
+        .notification-badge {
+            background-color: var(--whatsapp-green);
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
+            margin-left: auto;
+            animation: bounce 0.5s ease-in-out;
+        }
+
+        .new-message-indicator {
+            background-color: var(--whatsapp-green);
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.5rem;
+            font-size: 0.75rem;
+            margin-left: 0.5rem;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .last-message-preview {
+            font-size: 0.75rem;
+            color: var(--text-color);
+            opacity: 0.6;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 150px;
+        }
+
+        .text-muted {
+            color: var(--muted-text) !important;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes bounce {
+            0% { transform: scale(0); }
+            50% { transform: scale(1.2); }
+            100% { transform: scale(1); }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="sidebar">
+        <div class="chat-header">
+            <h4>Team Members</h4>
+        </div>
+        <div id="userList">
+            {% for user in users %}
+            <div class="user-item" data-userid="{{ user.id }}" onclick="selectUser({{ user.id }}, '{{ user.name }}')">
+                <div class="user-avatar">
+                    <i class="fas fa-user-circle fa-2x"></i>
+                </div>
+                <div class="user-info">
+                    <h6>{{ user.name }}</h6>
+                    <small>{{ user.role }}</small>
+                    <div class="last-message-preview" id="preview-{{ user.id }}"></div>
+                </div>
+                <div id="notification-{{ user.id }}" class="notification-badge" style="display: none;">0</div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <div class="chat-area">
+        <div class="chat-header" id="currentChatHeader">
+            <h4>Select a user to start chatting</h4>
+            <span id="newMessageIndicator" class="new-message-indicator" style="display: none;">New Message</span>
+        </div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="message-input" id="messageInput">
+            <div class="input-group">
+                <input type="text" id="messageBox" class="form-control" placeholder="Type your message...">
+                <button class="btn btn-primary" onclick="sendMessage()">
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const socket = io('http://localhost:5000', {
+            transports: ['websocket'],
+            withCredentials: true
+        });
+
+        let loggedInUserId = {{ current_user_id | safe }};
+        let selectedUser = null;
+        let unreadCounts = JSON.parse(localStorage.getItem('unreadCounts')) || {};
+
+        // Initialize notification badges on page load
+        window.addEventListener('load', () => {
+            Object.keys(unreadCounts).forEach(userId => {
+                const notificationBadge = document.getElementById(`notification-${userId}`);
+                if (notificationBadge && unreadCounts[userId] > 0) {
+                    notificationBadge.textContent = unreadCounts[userId];
+                    notificationBadge.style.display = 'flex';
+                }
+            });
+        });
+
+        socket.on('connect', () => {
+            console.log('Connected to chat server');
+            socket.emit('join', { user_id: loggedInUserId });
+        });
+
+        socket.on('connect_error', (error) => {
+            console.error('Connection error:', error);
+            alert('Failed to connect: ' + error.message);
+        });
+
+        socket.on('receive_message', (data) => {
+            if (!data?.sender_id || !data?.message || !data?.timestamp) {
+                console.error('Malformed message:', data);
+                return;
+            }
+
+            updateLastMessagePreview(data.sender_id, data.message);
+
+            // Only append message if it's from another user and the chat is active with that user
+            if (selectedUser && data.sender_id !== loggedInUserId && (data.sender_id === selectedUser.id || data.receiver_id === selectedUser.id)) {
+                const type = 'received';
+                appendMessage(data, type);
+            } else if (data.sender_id !== loggedInUserId && data.receiver_id === loggedInUserId) {
+                // Update notification for unread messages from other users
+                updateMessageIndicators(data.sender_id, data.message);
+            }
+        });
+
+        socket.on('error', (data) => {
+            console.error('Server error:', data.message);
+            alert('Error: ' + data.message);
+        });
+
+        function selectUser(userId, userName) {
+            document.querySelectorAll('.user-item').forEach(item => {
+                item.classList.remove('active');
+            });
+
+            const selectedItem = document.querySelector(`.user-item[data-userid="${userId}"]`);
+            if (selectedItem) {
+                selectedItem.classList.add('active');
+                selectedUser = { id: userId, name: userName };
+                clearNotifications(userId); // Clear notifications when chat is opened
+            }
+
+            document.getElementById('currentChatHeader').innerHTML = `
+                <h4>Chatting with ${userName}</h4>
+                <small class="text-muted">User ID: ${userId}</small>
+            `;
+
+            document.getElementById('messageInput').style.display = 'block';
+            loadChatHistory(userId);
+        }
+
+        function sendMessage() {
+            const messageInput = document.getElementById('messageBox');
+            const message = messageInput.value.trim();
+
+            if (!message || !selectedUser) {
+                alert('Please select a user and enter a message');
+                return;
+            }
+
+            const tempMessage = {
+                sender_id: loggedInUserId,
+                receiver_id: selectedUser.id,
+                message: message,
+                timestamp: new Date().toISOString()
+            };
+            appendMessage(tempMessage, 'sent');
+            updateLastMessagePreview(selectedUser.id, message);
+
+            socket.timeout(5000).emit('send_message', {
+                sender_id: loggedInUserId,
+                receiver_id: selectedUser.id,
+                message: message
+            }, (err) => {
+                if (err) {
+                    const messages = document.querySelectorAll('.message');
+                    const lastMessage = messages[messages.length - 1];
+                    if (lastMessage?.querySelector('.message-text')?.textContent === message) {
+                        lastMessage.remove();
+                    }
+                    alert('Failed to send message: ' + err.message);
+                }
+            });
+
+            messageInput.value = '';
+        }
+
+        async function loadChatHistory(userId) {
+            const chatMessages = document.getElementById('chatMessages');
+            chatMessages.innerHTML = '';
+
+            try {
+                const response = await fetch(`/chat/history/${loggedInUserId}/${userId}`);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! Status: ${response.status}`);
+                }
+
+                const data = await response.json();
+                if (!Array.isArray(data)) {
+                    throw new Error('Expected an array of messages');
+                }
+
+                if (data.length === 0) {
+                    chatMessages.innerHTML = '<div class="text-muted">No messages yet.</div>';
+                    return;
+                }
+
+                data.forEach(msg => {
+                    if (msg.sender_id && msg.message && msg.timestamp) {
+                        const type = msg.sender_id === loggedInUserId ? 'sent' : 'received';
+                        appendMessage(msg, type);
+                        updateLastMessagePreview(msg.sender_id === loggedInUserId ? msg.receiver_id : msg.sender_id, msg.message);
+                    } else {
+                        console.warn('Skipping invalid message:', msg);
+                    }
+                });
+
+                chatMessages.scrollTop = chatMessages.scrollHeight;
+            } catch (error) {
+                console.error('Error loading chat history:', error);
+                chatMessages.innerHTML = `
+                    <div class="text-danger">
+                        Failed to load chat history: ${error.message}. Please try again later.
+                    </div>
+                `;
+            }
+        }
+
+        function appendMessage(msg, type) {
+            const chatMessages = document.getElementById('chatMessages');
+            const timestamp = new Date(msg.timestamp).toLocaleString();
+
+            chatMessages.innerHTML += `
+                <div class="message ${type}">
+                    <div class="message-text">${msg.message}</div>
+                    <div class="message-info">
+                        ${type === 'sent' ? 'You' : msg.sender_id} • 
+                        <small>${timestamp}</small>
+                    </div>
+                </div>
+            `;
+
+            chatMessages.scrollTop = chatMessages.scrollHeight;
+        }
+
+        function updateMessageIndicators(senderId, message) {
+            if (senderId !== loggedInUserId) { // Only update for messages from other users
+                unreadCounts[senderId] = (unreadCounts[senderId] || 0) + 1;
+                localStorage.setItem('unreadCounts', JSON.stringify(unreadCounts)); // Save to localStorage
+                const notificationBadge = document.getElementById(`notification-${senderId}`);
+                if (notificationBadge) {
+                    notificationBadge.textContent = unreadCounts[senderId];
+                    notificationBadge.style.display = 'flex';
+                }
+
+                const newMessageIndicator = document.getElementById('newMessageIndicator');
+                if (newMessageIndicator) newMessageIndicator.style.display = 'inline-block';
+            }
+
+            updateLastMessagePreview(senderId, message);
+        }
+
+        function updateLastMessagePreview(userId, message) {
+            const preview = document.getElementById(`preview-${userId}`);
+            if (preview) {
+                preview.textContent = message.length > 20 ? message.substring(0, 20) + '...' : message;
+            }
+        }
+
+        function clearNotifications(userId) {
+            if (unreadCounts[userId]) {
+                unreadCounts[userId] = 0;
+                localStorage.setItem('unreadCounts', JSON.stringify(unreadCounts)); // Update localStorage
+                const notificationBadge = document.getElementById(`notification-${userId}`);
+                if (notificationBadge) notificationBadge.style.display = 'none';
+
+                const newMessageIndicator = document.getElementById('newMessageIndicator');
+                if (newMessageIndicator) newMessageIndicator.style.display = 'none';
+            }
+        }
+    </script>
+</body>
+</html>

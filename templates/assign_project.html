@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign Project</title>
+
+    <!-- FontAwesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" />
+
+    <!-- Toastify CSS -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastify-js/1.12.0/toastify.min.css" />
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --text-color: #ffffff;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #3b82f6;
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: var(--text-color);
+            display: flex;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background: var(--card-bg);
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 2rem 1rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin: 1rem 0;
+        }
+
+        .sidebar-nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: background 0.3s;
+        }
+
+        .sidebar-nav a:hover {
+            background: var(--primary-color);
+        }
+
+        .sidebar-nav i {
+            margin-right: 0.75rem;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 3rem;
+            width: 100%;
+            max-width: 800px;
+            margin: auto;
+        }
+
+        .header {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2rem;
+            color: var(--accent-color);
+        }
+
+        .form-container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .form-container label {
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .form-container input,
+        .form-container textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 1.5rem;
+            border: 1px solid var(--secondary-color);
+            border-radius: 5px;
+            background: var(--dark-bg);
+            color: var(--text-color);
+        }
+
+        .form-container textarea {
+            height: 100px;
+            resize: none;
+        }
+
+        .form-container button {
+            background: var(--primary-color);
+            color: var(--text-color);
+            padding: 12px;
+            width: 100%;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .form-container button:hover {
+            background: var(--accent-color);
+        }
+
+        .footer {
+            margin-top: 3rem;
+            text-align: center;
+            font-size: 0.9rem;
+            color: var(--text-color);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                text-align: center;
+            }
+
+            .main-content {
+                margin-left: 0;
+                padding: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="sidebar">
+        <div class="sidebar-logo">Team Lead Dashboard</div>
+        <ul class="sidebar-nav">
+            <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> Home</a></li>
+            <li><a href="{{ url_for('team_overview') }}"><i class="fas fa-users"></i> Team Overview</a></li>
+            <li><a href="{{ url_for('assign_project') }}"><i class="fas fa-clipboard-check"></i> Assign Project</a></li>
+            <li><a href="{{ url_for('chat') }}"><i class="fas fa-comments"></i> Chat</a></li>
+            <li><a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profile</a></li>
+            <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+        </ul>
+    </nav>
+
+    <div class="main-content">
+        <div class="header">
+            <h1>Assign Project</h1>
+        </div>
+
+        <div class="form-container">
+            <form id="assignProjectForm">
+                <label>Title:</label>
+                <input type="text" name="title" required>
+
+                <label>Description:</label>
+                <textarea name="description" required></textarea>
+
+                <label>Employee ID:</label>
+                <input type="number" name="emp_id" required>
+
+                <button type="submit">Assign Project</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Toastify JS -->
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            document.getElementById("assignProjectForm").addEventListener("submit", async function(event) {
+                event.preventDefault(); // Prevent full-page refresh
+
+                let formData = new FormData(this);
+
+                try {
+                    let response = await fetch("{{ url_for('assign_project') }}", {
+                        method: "POST",
+                        body: formData
+                    });
+
+                    let data = await response.json(); // Parse JSON response
+
+                    // Display Toastify notification
+                    Toastify({
+                        text: data.success ? "Project assigned successfully!" : `Error: ${data.message}`,
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: data.success ? "green" : "red",
+                    }).showToast();
+
+                    if (data.success) {
+                        this.reset(); // Reset form if successful
+                    }
+
+                } catch (error) {
+                    Toastify({
+                        text: "An unexpected error occurred!",
+                        duration: 3000,
+                        gravity: "top",
+                        position: "right",
+                        backgroundColor: "red",
+                    }).showToast();
+                }
+            });
+        });
+    </script>
+
+</body>
+</html>

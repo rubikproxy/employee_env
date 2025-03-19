@@ -1,0 +1,55 @@
+<!-- templates/error.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Error - {{ error_code }}</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f5f5f5;
+        }
+        .error-container {
+            text-align: center;
+            padding: 2rem;
+            background-color: white;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #dc3545;
+            font-size: 4rem;
+            margin: 0;
+        }
+        h2 {
+            color: #333;
+            margin: 1rem 0;
+        }
+        p {
+            color: #666;
+            margin-bottom: 1rem;
+        }
+        a {
+            color: #007bff;
+            text-decoration: none;
+        }
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="error-container">
+        <h1>{{ error_code }}</h1>
+        <h2>{{ error_title }}</h2>
+        <p>{{ error_message }}</p>
+        <p><a href="{{ url_for('home') }}">Return to Home</a></p>
+    </div>
+</body>
+</html>

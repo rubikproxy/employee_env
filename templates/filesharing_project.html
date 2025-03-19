@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>File Sharing</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --secondary-color: #1e40af;
+            --text-color: #ffffff;
+            --dark-bg: #0f172a;
+            --card-bg: #1e293b;
+            --accent-color: #3b82f6;
+        }
+
+        body {
+            background: var(--dark-bg);
+            color: var(--text-color);
+            line-height: 1.6;
+        }
+
+        .sidebar {
+            width: 250px;
+            height: 100vh;
+            background: var(--card-bg);
+            position: fixed;
+            left: 0;
+            top: 0;
+            padding: 2rem 1rem;
+            overflow-y: auto;
+        }
+
+        .sidebar-logo {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: var(--accent-color);
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .sidebar-nav {
+            list-style: none;
+        }
+
+        .sidebar-nav li {
+            margin: 1rem 0;
+        }
+
+        .sidebar-nav a {
+            color: var(--text-color);
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            transition: background 0.3s;
+        }
+
+        .sidebar-nav a:hover {
+            background: var(--primary-color);
+        }
+
+        .sidebar-nav i {
+            margin-right: 0.75rem;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 2rem;
+        }
+
+        .header {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+        }
+
+        h2 {
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            font-size: 1.75rem;
+        }
+
+        h3 {
+            color: var(--accent-color);
+            margin-bottom: 0.75rem;
+            font-size: 1.25rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+        }
+
+        ul, ol {
+            margin-left: 2rem;
+            margin-bottom: 1rem;
+        }
+
+        pre {
+            background: #2d3748;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+        }
+
+        code {
+            font-family: monospace;
+        }
+
+        section {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .download-btn {
+            display: inline-block;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-color);
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: background 0.3s;
+        }
+
+        .download-btn:hover {
+            background: var(--secondary-color);
+        }
+
+        .footer {
+            margin-top: 6rem;
+            background: var(--card-bg);
+            padding: 1rem;
+            text-align: center;
+            border-radius: 0.5rem;
+        }
+
+        .footer .footer-content {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+            font-size: 1rem;
+            color: var(--text-color);
+        }
+
+        .footer .footer-content i {
+            color: var(--accent-color);
+        }
+
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+            }
+
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="sidebar">
+            <div class="sidebar-logo">Dashboard</div>
+            <ul class="sidebar-nav">
+                <li><a href="{{ url_for('dashboard') }}"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="{{ url_for('my_project') }}"><i class="fas fa-tasks"></i> Projects</a></li>
+                <li><a href="{{ url_for('instance') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                <li><a href="{{ url_for('chat') }}"><i class="fas fa-comments"></i> Chat</a></li>
+                <li><a href="{{ url_for('filesharing') }}"><i class="fas fa-folder"></i>File Sharing</a></li>
+                <li><a href="{{ url_for('profile') }}"><i class="fas fa-user"></i> Profile</a></li>
+                <li><a href="{{ url_for('logout') }}"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+            </ul>
+        </div>
+    </nav>
+    
+    <main class="main-content">
+        <div class="header">
+            <h1>File Sharing Guide</h1>
+            <p>A comprehensive step-by-step guide to securely sharing files over WireGuard VPN.</p>
+        </div>
+        
+        <section>
+            <h2><i class="fas fa-shield-alt"></i> Prerequisites</h2>
+            <p>Before starting, ensure the following:</p>
+            <ul>
+                <li>WireGuard VPN is installed on both sender and receiver devices.</li>
+                <li>Both parties have established a secure VPN connection.</li>
+                <li>You can ping <strong>172.20.0.1</strong> to verify connectivity.</li>
+            </ul>
+
+            <h2><i class="fas fa-server"></i> Download Python Server Script</h2>
+            <p>Download the server script to enable file sharing over the VPN:</p>
+            <p><a href="https://ik.imagekit.io/rubikproxy/file.py" class="download-btn" download>Download server.py</a></p>
+
+            <h2><i class="fas fa-file-code"></i> Sender Guide</h2>
+            <p>Follow these steps to share your files:</p>
+            <ol>
+                <li>Enable WireGuard VPN and verify connectivity:
+                    <pre><code>ping 172.20.0.1</code></pre>
+                </li>
+                <li>Select the folder you want to share and note its full path.</li>
+                <li>Download and run the server script:
+                    <pre><code>python3 server.py</code></pre>
+                </li>
+                <li>Enter the folder path when prompted by the script.</li>
+                <li>Note the generated link (e.g., <strong>http://your-ip:8000/</strong>) and share it with the receiver.</li>
+            </ol>
+
+            <h2><i class="fas fa-file-download"></i> Receiver Guide</h2>
+            <p>Follow these steps to access shared files:</p>
+            <ol>
+                <li>Enable WireGuard VPN and verify connectivity:
+                    <pre><code>ping 172.20.0.1</code></pre>
+                </li>
+                <li>Obtain the link from the sender (e.g., <strong>http://sender-ip:8000/</strong>).</li>
+                <li>Open a web browser and navigate to the provided link.</li>
+                <li>Browse the shared folder and download the desired files.</li>
+            </ol>
+        </section>
+    </main>
+</body>
+</html>

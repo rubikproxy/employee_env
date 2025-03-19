@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Employee Profile</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        :root {
+            --primary-color: #4f46e5;
+            --secondary-color: #6366f1;
+            --text-color: #ffffff;
+            --bg-color: #111827;
+            --card-bg: #1f2937;
+            --accent-color: #818cf8;
+        }
+
+        body {
+            background: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            flex-direction: column;
+        }
+
+
+        .profile-container {
+            background: var(--card-bg);
+            padding: 2rem;
+            border-radius: 1rem;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            text-align: center;
+            width: 400px;
+        }
+
+        .profile-container h2 {
+            color: var(--accent-color);
+            margin-bottom: 1rem;
+            font-size: 1.8rem;
+        }
+
+        .profile-info {
+            margin: 1rem 0;
+            text-align: left;
+        }
+
+        .profile-info p {
+            margin: 0.75rem 0;
+            font-size: 1.1rem;
+            display: flex;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--accent-color);
+            padding-bottom: 5px;
+        }
+
+        .logout-btn {
+            display: inline-block;
+            margin-top: 1.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary-color);
+            color: var(--text-color);
+            text-decoration: none;
+            border-radius: 0.5rem;
+            transition: 0.3s;
+            font-weight: bold;
+        }
+
+        .logout-btn:hover {
+            background: var(--secondary-color);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="profile-container">
+        <h2>Profile Details</h2>
+        {% if user %}
+            <div class="profile-info">
+                <p><strong>Name:</strong> <span>{{ user.name }}</span></p>
+                <p><strong>Username:</strong> <span>{{ user.username }}</span></p>
+                <p><strong>Email:</strong> <span>{{ user.email }}</span></p>
+                <p><strong>Phone:</strong> <span>{{ user.phone }}</span></p>
+                <p><strong>Role:</strong> <span>{{ user.role }}</span></p>
+            </div>
+        {% else %}
+            <p>User not found</p>
+        {% endif %}
+        <a href="{{ url_for('dashboard') }}" class="logout-btn">Go to Dashboard</a>
+    </div>
+
+</body>
+</html>
